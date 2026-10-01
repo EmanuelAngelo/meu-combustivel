@@ -6,7 +6,7 @@
   "rewrites": [
     {
       "source": "/api/:path*",
-      "destination": "https://SEU-USUARIO.pythonanywhere.com/api/:path*"
+      "destination": "https://emanuelangelo1992.pythonanywhere.com/api/:path*"
     },
     {
       "source": "/((?!api(?:/|$)).*)",
