@@ -5,6 +5,10 @@
   "outputDirectory": "dist",
   "rewrites": [
     {
+  "source": "/api/teste-conexao",
+  "destination": "https://emanuelangelo1992.pythonanywhere.com/api/auth/session/"
+},
+    {
       "source": "/api/:path*",
       "destination": "https://emanuelangelo1992.pythonanywhere.com/api/:path*"
     },
