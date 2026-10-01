@@ -16,3 +16,7 @@ backend/staticfiles/
 .env
 coverage/
 !.env.django
+
+!.env.demo
+!backend/.env.production.example
+venv/

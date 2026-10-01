@@ -1,4 +1,6 @@
 import uuid
+from pathlib import Path
+from unittest import skipUnless
 from decimal import Decimal
 from datetime import timedelta
 from django.contrib.auth import get_user_model
@@ -100,7 +102,10 @@ class APITests(TestCase):
         self.assertEqual(anon.post('/api/auth/password-confirm/',payload,format='json').status_code,200)
         self.assertEqual(anon.post('/api/auth/password-confirm/',payload,format='json').status_code,400)
         self.a.refresh_from_db(); self.assertTrue(self.a.check_password(payload['password']))
+    @skipUnless((Path(__file__).resolve().parents[2] / 'dist' / 'index.html').exists(), 'Optional combined deployment requires npm run build')
+    @override_settings(SERVE_FRONTEND=True, WHITENOISE_ROOT=str(Path(__file__).resolve().parents[2] / 'dist'))
     def test_static_app_manifest_and_serviceworker_are_served(self):
+        self.client = APIClient()  # Rebuild middleware under the combined-mode override.
         import json
         from pathlib import Path
         response=self.client.get('/')

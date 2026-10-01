@@ -1,528 +1,133 @@
 # Meu Combustível
 
-Aplicação web para controle de abastecimentos, veículos e consulta de preços de combustíveis.
+Aplicação para controlar veículos e abastecimentos, conferir os valores da bomba e consultar preços de postos.
 
-O projeto foi desenvolvido com **Vue 3 + TypeScript + Tailwind CSS** no frontend e **Django REST Framework** no backend. Atualmente utiliza **SQLite** como banco de dados e também possui suporte a instalação como **PWA** em navegadores compatíveis.
+Vue 3, TypeScript e Tailwind CSS no frontend. Django REST Framework e SQLite no backend. Interface em português, responsiva e instalável como PWA.
 
-## Tecnologias
+## Executar no computador
 
-### Frontend
+Requisitos: Python 3.12 ou 3.13 e Node.js 22 ou superior.
 
-- Vue 3
-- TypeScript
-- Vite
-- Tailwind CSS
-- Leaflet
-- PWA / Service Worker
-
-### Backend
-
-- Python 3.12+
-- Django
-- Django REST Framework
-- SQLite
-
-## Funcionalidades
-
-Atualmente o sistema possui:
-
-- Cadastro de usuários
-- Login e logout
-- Sessões protegidas com cookies HttpOnly
-- Proteção CSRF
-- Recuperação de senha por e-mail
-- Cadastro de múltiplos veículos
-- Definição de veículo principal
-- Registro de abastecimentos
-- Histórico de abastecimentos
-- Filtros de histórico
-- Exportação para CSV
-- Cadastro e consulta de postos
-- Registro de preços por combustível e forma de pagamento
-- Ranking de preços recentes
-- Sistema de relatos
-- Área administrativa pelo Django Admin
-- Instalação como PWA
-- Tratamento de indisponibilidade de conexão
-
-Cada usuário possui acesso apenas aos próprios veículos e abastecimentos.
-
-Os dados públicos dos postos e preços são tratados separadamente dos dados privados de cada usuário.
-
----
-
-## Estrutura do projeto
-
-O repositório contém frontend e backend no mesmo projeto.
-
-```text
-meu-combustivel/
-├── backend/
-├── scripts/
-├── src/
-├── public/
-├── Dockerfile
-├── compose.yaml
-├── package.json
-└── README.md
-```
-
-O frontend pode ser executado separadamente durante o desenvolvimento ou compilado para ser servido diretamente pelo Django.
-
----
-
-## Executando localmente
-
-### Requisitos
-
-Antes de começar, instale:
-
-- Python 3.12 ou superior
-- Node.js 22 ou superior
-
-Clone o repositório:
-
-```bash
-git clone <URL_DO_REPOSITORIO>
-cd meu-combustivel
-```
-
-### Inicialização automática
-
-O projeto possui um script que prepara todo o ambiente local.
-
-No Windows:
+Na raiz do projeto, usando PowerShell:
 
 ```powershell
-py scripts/start-local.py
+python -m venv venv
+.\venv\Scripts\Activate.ps1
+pip install -r backend/requirements.txt
+Copy-Item backend/.env.example backend/.env
+python backend/manage.py migrate
+python backend/manage.py runserver
 ```
 
-Ou:
+Se já possui `backend/.env`, ajuste-o sem sobrescrever suas configurações. O Django agora lê esse arquivo automaticamente, tanto no terminal quanto no WSGI. Variáveis já definidas no ambiente têm prioridade.
+
+Em outro terminal, na raiz:
 
 ```powershell
-python scripts/start-local.py
-```
-
-O script realiza automaticamente:
-
-- criação do ambiente virtual Python;
-- instalação das dependências do backend;
-- instalação das dependências do frontend;
-- build do frontend;
-- aplicação das migrations;
-- inicialização do servidor Django.
-
-Depois disso, acesse:
-
-```text
-http://127.0.0.1:8000
-```
-
-> O servidor de desenvolvimento deve ser utilizado apenas localmente. Para publicação, utilize uma configuração apropriada de produção.
-
----
-
-## Banco de dados
-
-Por padrão, o projeto utiliza SQLite.
-
-O banco fica localizado em:
-
-```text
-backend/data/db.sqlite3
-```
-
-Os dados permanecem salvos mesmo após fechar e iniciar novamente a aplicação.
-
-Para realizar backup manual do banco, é recomendado parar a aplicação antes de copiar o arquivo.
-
-Para ambientes com maior volume de usuários, a migração para **PostgreSQL** é recomendada.
-
----
-
-## Desenvolvimento separado
-
-Durante o desenvolvimento, frontend e backend também podem ser executados separadamente.
-
-### Backend
-
-Crie o ambiente virtual:
-
-```bash
-python -m venv .venv
-```
-
-Linux/macOS:
-
-```bash
-.venv/bin/pip install -r backend/requirements.txt
-
-DJANGO_DEBUG=true .venv/bin/python backend/manage.py migrate
-
-DJANGO_DEBUG=true .venv/bin/python backend/manage.py runserver 127.0.0.1:8000
-```
-
-No Windows PowerShell:
-
-```powershell
-.venv\Scripts\pip.exe install -r backend\requirements.txt
-
-$env:DJANGO_DEBUG="true"
-
-.venv\Scripts\python.exe backend\manage.py migrate
-
-.venv\Scripts\python.exe backend\manage.py runserver 127.0.0.1:8000
-```
-
-### Frontend
-
-Em outro terminal:
-
-```bash
 npm ci
-npm run dev:server
+npm run dev
 ```
 
-Durante o desenvolvimento, o Vite encaminha as requisições de `/api` para o Django executando localmente.
+Acesse **http://localhost:4173**. O backend fica em **http://127.0.0.1:8000**. O Vite encaminha `/api` para o Django; são processos separados.
 
-Para gerar a versão que será servida pelo backend:
+A aplicação abre na tela de login/cadastro. Se a API estiver indisponível, apresenta um erro de conexão; não substitui seus dados por exemplos.
+
+Também é possível iniciar os dois processos com `python scripts/start-local.py`, que prepara o ambiente e executa as migrações. O script força o modo de desenvolvimento e deve ser usado apenas no computador.
+
+## Publicação
+
+- **Backend:** PythonAnywhere, com WSGI.
+- **Frontend:** Vercel, com `npm run build` e saída `dist`.
+- **API:** o Vercel encaminha `/api/*` para o PythonAnywhere via `vercel.json`.
+
+O código Python e o banco permanecem no PythonAnywhere; o Vercel entrega a interface e encaminha as requisições. O navegador usa a mesma origem para interface e API, preservando os cookies de sessão sem depender de cookies de terceiros.
+
+Siga **[DEPLOY.md](DEPLOY.md)** para configurar os dois serviços. Antes de publicar, informe o domínio do backend:
 
 ```bash
-npm run build:server
+npm run configure:vercel -- https://SEU-USUARIO.pythonanywhere.com
 ```
 
----
+Envie o `vercel.json` atualizado ao repositório antes do deploy. Preencha também `backend/.env` com a chave secreta e o domínio real do frontend.
 
-## Autenticação e segurança
+## Comandos do frontend
 
-A autenticação utiliza sessões do Django.
-
-Os cookies de sessão são configurados como **HttpOnly** e as operações de escrita utilizam proteção CSRF.
-
-O frontend não armazena tokens permanentes de autenticação em:
-
-- localStorage
-- IndexedDB
-- cache da aplicação
-
-As senhas são armazenadas utilizando o sistema de hashing do próprio Django.
-
-A recuperação de senha utiliza tokens temporários de uso único.
-
----
-
-## Registro de abastecimentos
-
-Cada abastecimento pode armazenar informações como:
-
-- veículo
-- posto
-- tipo de combustível
-- preço por litro
-- valor total
-- quantidade de litros
-- forma de pagamento
-- quilometragem
-- indicação de tanque cheio
-- observações
-
-Os cálculos financeiros são realizados no backend utilizando `Decimal`, evitando problemas comuns de precisão com números de ponto flutuante.
-
-O servidor também realiza validações para identificar:
-
-- volume superior à capacidade do tanque;
-- divergências relevantes entre litros, preço e valor total;
-- repetição da mesma requisição.
-
----
-
-## Postos e preços
-
-Os postos fazem parte de um cadastro compartilhado entre os usuários.
-
-A aplicação possui normalização e deduplicação utilizando informações como:
-
-- nome
-- endereço
-- cidade
-- estado
-- país
-
-Os preços possuem identificação por:
-
-- tipo de combustível
-- forma de pagamento
-
-Para o ranking atual, são considerados preços registrados nos últimos **7 dias**.
-
-Registros mais antigos continuam armazenados, mas deixam de participar da comparação atual.
-
----
-
-## Privacidade
-
-Os abastecimentos são privados.
-
-Informações como:
-
-- usuário
-- veículo
-- quilometragem
-- valor total
-- observações pessoais
-
-não fazem parte das informações públicas de preço dos postos.
-
-Os dados públicos utilizados na comparação são mantidos separadamente dos dados privados de abastecimento.
-
----
-
-## PWA e funcionamento offline
-
-O Meu Combustível pode ser instalado como PWA em navegadores compatíveis.
-
-O Service Worker armazena apenas os arquivos públicos necessários para carregar a interface.
-
-Respostas privadas da API, credenciais e registros pessoais não são armazenados em cache offline.
-
-Se a conexão cair enquanto a tela estiver aberta, informações ainda não enviadas podem permanecer temporariamente na memória da página.
-
-Recarregar ou fechar a aplicação descarta formulários que ainda não tenham sido enviados ao servidor.
-
-Para funcionamento correto da PWA em produção é necessário utilizar **HTTPS**.
-
----
-
-## Recuperação de senha
-
-Para ativar a recuperação de senha por e-mail, configure as variáveis SMTP no arquivo `.env`.
-
-Exemplo:
-
-```env
-EMAIL_HOST=
-EMAIL_PORT=
-EMAIL_HOST_USER=
-EMAIL_HOST_PASSWORD=
-EMAIL_USE_TLS=
-DEFAULT_FROM_EMAIL=
-PUBLIC_APP_URL=
-```
-
-Sem configuração SMTP, o envio real de e-mails permanece desativado.
-
----
-
-## Variáveis de ambiente
-
-Copie o arquivo de exemplo:
-
-```bash
-cp .env.example .env
-```
-
-No Windows:
-
-```powershell
-Copy-Item .env.example .env
-```
-
-Preencha as configurações necessárias antes de executar o projeto em produção.
-
-Nunca publique o arquivo `.env` no repositório.
-
-Para gerar uma chave secreta:
-
-```bash
-python -c "import secrets; print(secrets.token_urlsafe(64))"
-```
-
----
-
-## Docker
-
-O projeto possui:
-
-```text
-Dockerfile
-compose.yaml
-```
-
-Para iniciar:
-
-```bash
-docker compose up --build -d
-```
-
-O SQLite é armazenado em volume persistente.
-
-Para criar um administrador:
-
-```bash
-docker compose exec app python manage.py createsuperuser
-```
-
-Depois acesse:
-
-```text
-/admin/
-```
-
-A área administrativa pode ser utilizada para gerenciamento e moderação dos dados da aplicação.
-
-Em produção, recomenda-se utilizar um proxy reverso com HTTPS.
-
-A variável:
-
-```env
-TRUST_PROXY_SSL_HEADER=true
-```
-
-deve ser ativada somente quando o proxy estiver configurado corretamente para enviar `X-Forwarded-Proto`.
-
----
-
-## API
-
-As rotas da API utilizam barra final.
-
-### Autenticação
-
-| Método | Rota | Descrição |
-| --- | --- | --- |
-| GET | `/api/auth/session/` | Consulta sessão, CSRF e recursos disponíveis |
-| POST | `/api/auth/register/` | Criação de conta |
-| POST | `/api/auth/login/` | Login |
-| POST | `/api/auth/logout/` | Logout |
-| POST | `/api/auth/password-reset/` | Solicitação de recuperação de senha |
-| POST | `/api/auth/password-confirm/` | Definição de nova senha |
-
-### Recursos
-
-| Rota | Descrição |
+| Comando | Resultado |
 | --- | --- |
-| `/api/vehicles/` | Veículos do usuário |
-| `/api/refuelings/` | Abastecimentos |
-| `/api/stations/` | Postos e consulta de preços |
-| `/api/reports/` | Relatos enviados pelo usuário |
+| `npm run dev` | Aplicação real na porta 4173 |
+| `npm run build` | Build da aplicação real em `dist` |
+| `npm run dev:demo` | Demonstração com dados fictícios na porta 4174 |
+| `npm run build:demo` | Build demonstrativo; não usar no Vercel de produção |
+| `npm run dev:server` | Alias compatível para desenvolvimento real |
+| `npm run build:server` | Build real, compatível com a hospedagem antiga |
+| `npm test` | Testes de cálculo |
 
-O endpoint de postos aceita filtros como:
+O modo demonstrativo só é ativado por `--mode demo`. Um `.env.local` antigo com `VITE_API_MODE=demo` não muda o comportamento de `npm run dev` ou `npm run build`.
 
-```text
-fuel
-payment
-```
+## Configurações
 
-permitindo consultar preços comparáveis pelo tipo de combustível e forma de pagamento.
+Frontend: `.env.local` opcional, baseado em `.env.example`. Backend: `backend/.env`, baseado em `backend/.env.example` para desenvolvimento ou `backend/.env.production.example` para produção.
 
----
+| Variável | Finalidade |
+| --- | --- |
+| `VITE_API_BASE_URL` | Base da API; padrão `/api`, recomendado com os proxies |
+| `DEV_API_TARGET` | Destino local do proxy Vite; padrão `http://127.0.0.1:8000` |
+| `DJANGO_SECRET_KEY` | Chave privada do Django, obrigatória em produção |
+| `DJANGO_DEBUG` | `true` apenas no desenvolvimento |
+| `DJANGO_ALLOWED_HOSTS` | Hosts aceitos pelo backend, separados por vírgula, sem protocolo |
+| `DJANGO_CORS_ALLOWED_ORIGINS` | Origens exatas autorizadas, com protocolo e sem barra final |
+| `DJANGO_CSRF_TRUSTED_ORIGINS` | Origens confiáveis para operações de escrita |
+| `PUBLIC_APP_URL` | Endereço do frontend para recuperação de senha |
+| `DJANGO_COOKIE_SAMESITE` | `Lax` com o proxy recomendado |
+| `TRUST_PROXY_SSL_HEADER` | Ativa reconhecimento de HTTPS atrás do proxy da hospedagem |
+| `DJANGO_SERVE_FRONTEND` | `false` por padrão; `true` para a hospedagem antiga no Django |
+
+Nunca coloque segredos em variáveis `VITE_*`: seus valores entram no JavaScript público. Os arquivos `.env` reais e o banco não devem ir para o repositório.
+
+## Funcionalidades e privacidade
+
+- Cadastro, login, logout e recuperação de senha com SMTP configurado.
+- Vários veículos por conta, capacidade do tanque e veículo principal.
+- Abastecimentos com preço anunciado, total pago, litros e conferência de valores.
+- Histórico, filtros e exportação CSV.
+- Cadastro compartilhado de postos e preços por combustível e pagamento.
+- Ranking de preços recentes, relatos para moderação e Django Admin.
+- Estrutura PWA com cache dos arquivos públicos da interface.
+
+Cada conta acessa somente seus veículos, abastecimentos e relatos. Os preços públicos ficam separados do histórico privado. A autenticação usa cookies HttpOnly e proteção CSRF; tokens permanentes não são armazenados em localStorage. CORS usa uma lista explícita de origens, não `*`.
+
+A conferência financeira usa Decimal no backend e não comprova qualidade do combustível nem volume realmente entregue. Preços com mais de sete dias saem do ranking atual. Os relatos não comprovam adulteração.
+
+O cadastro de postos é manual, com geolocalização opcional e prevenção de duplicidade por dados normalizados. Google Places ainda não está integrado. Recuperação de senha depende de SMTP. O modo offline não sincroniza novos abastecimentos: formulários não enviados permanecem apenas na memória da página.
+
+## Banco e atualização
+
+SQLite em `backend/data/db.sqlite3`. Preserve esse arquivo e `backend/.env` ao atualizar um projeto existente. Faça backup antes de aplicar alterações. O pacote não inclui banco com dados pessoais.
+
+Nenhuma migração de modelo foi adicionada nesta versão; execute `migrate` para aplicar eventuais migrações anteriores pendentes.
 
 ## Testes
 
-Frontend:
+Com o ambiente virtual ativo e `backend/.env` configurado para desenvolvimento:
 
 ```bash
+python backend/manage.py test fuel
 npm test
+npm run build
 ```
 
-Build integrado ao Django:
+A suíte verifica isolamento dos dados, cálculos, CSRF, sessão, CORS permitido e negado, cookies de produção e respostas sem cache da API.
 
-```bash
-npm run build:server
+## Estrutura
+
+```text
+backend/           API Django, modelos e testes
+src/               Interface Vue
+public/            Ícones e service worker
+scripts/           Inicialização local e configuração do Vercel
+deploy/            Exemplo WSGI para PythonAnywhere
+vercel.json        Build, proxy da API e rotas do frontend
+DEPLOY.md          Publicação e diagnóstico
 ```
 
-Backend:
-
-Linux/macOS:
-
-```bash
-DJANGO_DEBUG=true .venv/bin/python backend/manage.py test fuel
-```
-
-Windows PowerShell:
-
-```powershell
-$env:DJANGO_DEBUG="true"
-.venv\Scripts\python.exe backend\manage.py test fuel
-```
-
-Os testes do backend cobrem pontos como:
-
-- isolamento de dados entre usuários;
-- criação, alteração e exclusão de registros;
-- acesso indevido a veículos de outros usuários;
-- autenticação;
-- CSRF;
-- logout;
-- validação de senha;
-- recuperação de senha;
-- tokens de uso único;
-- cálculos financeiros com Decimal;
-- validação da capacidade do tanque;
-- prevenção de registros duplicados;
-- deduplicação de postos;
-- privacidade dos dados;
-- validade dos preços;
-- separação por combustível e pagamento;
-- moderação de relatos.
-
----
-
-## Situação atual
-
-O projeto já possui frontend e backend integrados e pode ser executado localmente ou publicado em um servidor com suporte a Python.
-
-Alguns recursos ainda podem ser ampliados nas próximas versões:
-
-- integração com Google Maps / Places;
-- busca avançada de cidades;
-- ranking de postos por proximidade;
-- cálculo de consumo em km/l;
-- estimativa de combustível restante;
-- anexos em relatos;
-- sincronização offline;
-- verificação de e-mail;
-- exclusão de conta;
-- política de privacidade;
-- termos de uso;
-- migração para PostgreSQL;
-- melhorias de observabilidade e monitoramento.
-
-Atualmente o mapa utiliza **Leaflet + OpenStreetMap** e o cadastro de localização dos postos pode ser feito manualmente.
-
----
-
-## Produção
-
-Antes de disponibilizar o sistema publicamente, é recomendado:
-
-- desativar `DEBUG`;
-- utilizar uma `SECRET_KEY` segura;
-- configurar HTTPS;
-- configurar corretamente `ALLOWED_HOSTS`;
-- configurar `CSRF_TRUSTED_ORIGINS`;
-- manter backups do banco;
-- configurar SMTP;
-- configurar monitoramento de erros;
-- aplicar limitação de requisições no proxy;
-- considerar PostgreSQL para maior volume de dados.
-
-O SQLite é suficiente para desenvolvimento, testes e uma implantação inicial de baixo volume.
-
----
-
-## Referências
-
-- [Django](https://www.djangoproject.com/)
-- [Django REST Framework](https://www.django-rest-framework.org/)
-- [Vue.js](https://vuejs.org/)
-- [Vite](https://vite.dev/)
-- [Tailwind CSS](https://tailwindcss.com/)
-- [Leaflet](https://leafletjs.com/)
-- [OpenStreetMap](https://www.openstreetmap.org/)
-
-## Licença
-
-Este projeto é distribuído sob a licença MIT.
-
-Consulte o arquivo [`LICENSE`](LICENSE) para mais informações.
+O Docker mantém o modo conjunto como opção: usa `backend/.env` e ativa `DJANGO_SERVE_FRONTEND=true`. A configuração principal desta versão é frontend e backend separados.

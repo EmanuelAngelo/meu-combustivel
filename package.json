@@ -1,14 +1,17 @@
 {
   "name": "meu-combustivel",
   "private": true,
-  "version": "0.2.0",
+  "version": "0.3.0",
   "type": "module",
   "scripts": {
-    "dev": "vite --host 0.0.0.0 --port 4173",
+    "dev": "vite --host 0.0.0.0 --port 4173 --strictPort",
     "build": "vue-tsc -b && vite build",
     "test": "node --test src/domain.test.mjs",
     "dev:server": "vite --mode django --host 0.0.0.0 --port 4173",
-    "build:server": "vue-tsc -b && vite build --mode django"
+    "build:server": "vue-tsc -b && vite build --mode django",
+    "dev:demo": "vite --mode demo --host 0.0.0.0 --port 4174 --strictPort",
+    "build:demo": "vue-tsc -b && vite build --mode demo",
+    "configure:vercel": "node scripts/configure-vercel.mjs"
   },
   "dependencies": {
     "vue": "^3.5.0",

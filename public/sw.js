@@ -1,5 +1,5 @@
 /* Offline shell only. Never cache authenticated API responses or user records. */
-const CACHE='meu-combustivel-shell-v2';
+const CACHE='meu-combustivel-shell-v3';
 const SHELL=['/','/index.html','/manifest.webmanifest','/favicon.svg','/icon-192.png','/icon-512.png'];
 self.addEventListener('install',event=>{event.waitUntil(caches.open(CACHE).then(cache=>cache.addAll(SHELL)));});
 self.addEventListener('activate',event=>{event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k.startsWith('meu-combustivel-shell-')&&k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim()));});

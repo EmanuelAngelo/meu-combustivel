@@ -1,15 +1,17 @@
 import {ref} from 'vue'
 export type Account={id:number,name:string,email:string}
-export const isDemo=import.meta.env.VITE_API_MODE!=='django'
+export const isDemo=import.meta.env.VITE_API_MODE==='demo'
 export const currentUser=ref<Account|null>(null)
 export const passwordResetAvailable=ref(false)
+const apiBase=(import.meta.env.VITE_API_BASE_URL || '/api').replace(/\/+$/, '')
 let csrfToken=''
 export class ApiError extends Error { constructor(message:string,public status=0){super(message)} }
 function errorText(data:any):string {if(typeof data==='string')return data;if(Array.isArray(data))return data.map(errorText).join(' ');if(data&&typeof data==='object')return Object.values(data).map(errorText).join(' ');return 'Não foi possível concluir a operação.'}
 export async function api<T=any>(path:string,method='GET',body?:unknown):Promise<T>{
  const controller=new AbortController();const timer=setTimeout(()=>controller.abort(),15000)
  try{
-  const response=await fetch('/api/'+path,{method,credentials:'same-origin',cache:'no-store',signal:controller.signal,headers:{Accept:'application/json',...(body!==undefined?{'Content-Type':'application/json'}:{}),...(method!=='GET'?{'X-CSRFToken':csrfToken}:{})},body:body===undefined?undefined:JSON.stringify(body)})
+  const response=await fetch(apiBase+'/'+path,{method,credentials:'include',cache:'no-store',signal:controller.signal,headers:{Accept:'application/json',...(body!==undefined?{'Content-Type':'application/json'}:{}),...(method!=='GET'?{'X-CSRFToken':csrfToken}:{})},body:body===undefined?undefined:JSON.stringify(body)})
+  if(response.status!==204 && !response.headers.get('content-type')?.includes('application/json')) throw new ApiError('A API não retornou JSON. Confira a configuração de conexão com o servidor.', response.status)
   const data=response.status===204?null:await response.json().catch(()=>({detail:'O servidor retornou uma resposta inesperada.'}))
   if(!response.ok){if(response.status===403&&/credenciais.*não|Authentication credentials/i.test(errorText(data))){currentUser.value=null;window.dispatchEvent(new Event('session-expired'))}throw new ApiError(errorText(data),response.status)}
   if(data?.csrfToken)csrfToken=data.csrfToken

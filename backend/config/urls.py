@@ -10,6 +10,8 @@ router.register('stations',StationViewSet,basename='station')
 router.register('refuelings',RefuelingViewSet,basename='refueling')
 router.register('reports',ReportViewSet,basename='report')
 def frontend(request):
+    if not settings.SERVE_FRONTEND:
+        return JsonResponse({'service': 'Meu Combustível API', 'status': 'ok'})
     index=settings.FRONTEND_DIST/'index.html'
     if not index.exists(): return JsonResponse({'detail':'Compile o frontend com npm run build:server.'},status=503)
     response=FileResponse(index.open('rb'),content_type='text/html'); response['Cache-Control']='no-cache'; return response
