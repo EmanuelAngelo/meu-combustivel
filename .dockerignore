@@ -1,0 +1,11 @@
+.git
+.venv
+node_modules
+dist
+.env
+.env.local
+.sites-runtime
+backend/data/*.sqlite3*
+backend/staticfiles
+**/__pycache__
+*.zip

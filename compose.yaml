@@ -1,0 +1,11 @@
+services:
+  app:
+    build: .
+    env_file: .env
+    ports:
+      - '127.0.0.1:8000:8000'
+    volumes:
+      - fuel_data:/app/backend/data
+    restart: unless-stopped
+volumes:
+  fuel_data:

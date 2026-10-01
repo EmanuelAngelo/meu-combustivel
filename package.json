@@ -1,0 +1,27 @@
+{
+  "name": "meu-combustivel",
+  "private": true,
+  "version": "0.2.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 0.0.0.0 --port 4173",
+    "build": "vue-tsc -b && vite build",
+    "test": "node --test src/domain.test.mjs",
+    "dev:server": "vite --mode django --host 0.0.0.0 --port 4173",
+    "build:server": "vue-tsc -b && vite build --mode django"
+  },
+  "dependencies": {
+    "vue": "^3.5.0",
+    "lucide-vue-next": "^0.468.0",
+    "leaflet": "^1.9.4"
+  },
+  "devDependencies": {
+    "vite": "^6.0.0",
+    "@vitejs/plugin-vue": "^5.2.0",
+    "typescript": "~5.7.2",
+    "vue-tsc": "^2.2.0",
+    "tailwindcss": "^4.0.0",
+    "@tailwindcss/vite": "^4.0.0",
+    "@types/leaflet": "^1.9.15"
+  }
+}
