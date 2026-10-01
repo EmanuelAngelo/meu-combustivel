@@ -3,20 +3,16 @@
   "framework": "vite",
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
-  "rewrites": [
-    {
-  "source": "/api/teste-conexao",
-  "destination": "https://emanuelangelo1992.pythonanywhere.com/api/auth/session/"
-},
-    {
-      "source": "/api/:path*",
-      "destination": "https://emanuelangelo1992.pythonanywhere.com/api/:path*"
-    },
-    {
-      "source": "/((?!api(?:/|$)).*)",
-      "destination": "/index.html"
-    }
-  ],
+ "rewrites": [
+  {
+    "source": "/api/:path*/",
+    "destination": "https://emanuelangelo1992.pythonanywhere.com/api/:path*/"
+  },
+  {
+    "source": "/((?!api(?:/|$)).*)",
+    "destination": "/index.html"
+  }
+],
   "headers": [
     {
       "source": "/api/:path*",
