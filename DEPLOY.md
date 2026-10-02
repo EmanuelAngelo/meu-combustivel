@@ -2,6 +2,8 @@
 
 Substitua `SEU-USUARIO` e `SEU-PROJETO` pelos nomes reais. Não publique com esses exemplos. Se já tem banco de produção, preserve `backend/data/db.sqlite3`, `backend/.env` e sua chave secreta existente.
 
+Para atualizar a instalação existente e configurar Google Maps, siga também [ATUALIZACAO.md](ATUALIZACAO.md).
+
 ## 1. Backend no PythonAnywhere
 
 Envie o código ou clone seu repositório em `/home/SEU-USUARIO/meu-combustivel`.
@@ -59,19 +61,20 @@ Abra `https://SEU-USUARIO.pythonanywhere.com/`: deve retornar JSON identificando
 
 ## 2. Frontend no Vercel
 
-Na raiz do projeto, em seu computador:
+Na pasta `frontend/`, em seu computador:
 
 ```bash
+cd frontend
 npm run configure:vercel -- https://SEU-USUARIO.pythonanywhere.com
 ```
 
-Isso grava o destino real de `/api/:path*` em `vercel.json`. Envie esse arquivo e as alterações ao seu repositório. O Vercel lê as regras antes de executar o build, portanto configure o arquivo **antes** do deploy.
+Isso grava o destino real de `/api/:path*/` em `frontend/vercel.json`. Envie esse arquivo e as alterações ao seu repositório. O Vercel lê as regras antes de executar o build, portanto configure o arquivo **antes** do deploy.
 
 Importe o repositório no Vercel:
 
 | Configuração | Valor |
 | --- | --- |
-| Root Directory | Raiz, onde está `package.json` |
+| Root Directory | `frontend` |
 | Framework Preset | Vite |
 | Install Command | `npm ci` |
 | Build Command | `npm run build` |

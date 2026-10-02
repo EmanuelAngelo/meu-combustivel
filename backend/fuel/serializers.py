@@ -31,9 +31,17 @@ class VehicleSerializer(serializers.ModelSerializer):
 class StationSerializer(serializers.ModelSerializer):
     price = serializers.DecimalField(max_digits=9, decimal_places=3, read_only=True, default=None)
     updated = serializers.DateField(read_only=True, default=None)
+    common_price = serializers.DecimalField(max_digits=9, decimal_places=3, read_only=True, default=None)
+    credit_price = serializers.DecimalField(max_digits=9, decimal_places=3, read_only=True, default=None)
+    common_updated = serializers.DateField(read_only=True, default=None)
+    credit_updated = serializers.DateField(read_only=True, default=None)
+    external_id = serializers.CharField(max_length=255, required=False, allow_null=True, allow_blank=True)
+
+    def validate_external_id(self, value):
+        return value.strip() or None if value else None
     class Meta:
         model = Station
-        fields = ['id','name','address','city','state','country','lat','lng','air','air_confirmed_at','price','updated']
+        fields = ['id','name','address','city','state','country','lat','lng','air','air_confirmed_at','price','updated','common_price','credit_price','common_updated','credit_updated','external_id']
         read_only_fields = ['id','air_confirmed_at']
     def validate_lat(self, value):
         if not -90 <= value <= 90: raise serializers.ValidationError('Latitude inválida.')
@@ -50,7 +58,7 @@ class RefuelingSerializer(serializers.ModelSerializer):
     effective = serializers.SerializerMethodField()
     class Meta:
         model = Refueling
-        fields = ['id','vehicle','station','date','fuel','price','total','liters','km','full','payment','note','share','acknowledged','client_id','expected','difference','effective']
+        fields = ['id','vehicle','station','date','fuel','price','total','liters','km','full','payment','note','share','acknowledged','client_id','common_payment','common_price','credit_price','expected','difference','effective']
         read_only_fields = ['id']
         validators = [] # Idempotency is handled in the view within owner scope.
     def __init__(self, *args, **kwargs):
@@ -67,6 +75,14 @@ class RefuelingSerializer(serializers.ModelSerializer):
         expected = (values['price']*values['liters']).quantize(Decimal('.01'), rounding=ROUND_HALF_UP)
         if (abs(values['total']-expected)>Decimal('.01') or values['liters']>values['vehicle'].capacity) and not values['acknowledged']:
             raise serializers.ValidationError({'acknowledged':'Confira os valores e confirme a revisão.'})
+        payment = data.get('payment', getattr(self.instance, 'payment', None))
+        common_payment = data.get('common_payment', getattr(self.instance, 'common_payment', 'Pix'))
+        for field, condition in [('common_price', common_payment), ('credit_price', 'Crédito')]:
+            price = data.get(field, getattr(self.instance, field, None))
+            if price is not None and price <= 0:
+                raise serializers.ValidationError({field: 'Informe um preço maior que zero ou deixe em branco.'})
+            if price is not None and payment == condition and price != values['price']:
+                raise serializers.ValidationError({field: 'Para o mesmo pagamento, informe o mesmo preço por litro do abastecimento.'})
         return data
 class ReportSerializer(serializers.ModelSerializer):
     class Meta:

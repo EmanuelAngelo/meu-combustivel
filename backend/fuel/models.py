@@ -59,13 +59,16 @@ class Refueling(models.Model):
     note = models.TextField(max_length=1000, blank=True)
     share = models.BooleanField(default=True)
     acknowledged = models.BooleanField(default=False)
+    common_payment = models.CharField(max_length=30, choices=[(v, v) for v in ['Pix', 'Dinheiro', 'Débito']], default='Pix')
+    common_price = models.DecimalField(max_digits=9, decimal_places=3, null=True, blank=True)
+    credit_price = models.DecimalField(max_digits=9, decimal_places=3, null=True, blank=True)
     client_id = models.UUIDField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     class Meta:
         ordering = ['-date', '-id']
         constraints = [models.UniqueConstraint(fields=['owner','client_id'], name='unique_user_refueling_request'), models.CheckConstraint(condition=Q(price__gt=0)&Q(total__gt=0)&Q(liters__gt=0), name='positive_refueling_values')]
 class PriceObservation(models.Model):
-    source = models.OneToOneField(Refueling, on_delete=models.CASCADE, related_name='observation')
+    source = models.ForeignKey(Refueling, on_delete=models.CASCADE, related_name='observations')
     station = models.ForeignKey(Station, on_delete=models.CASCADE, related_name='prices')
     fuel = models.CharField(max_length=30, choices=FUEL_CHOICES)
     price = models.DecimalField(max_digits=9, decimal_places=3)
@@ -75,6 +78,7 @@ class PriceObservation(models.Model):
     date = models.DateField()
     created_at = models.DateTimeField(auto_now_add=True)
     class Meta:
+        constraints = [models.UniqueConstraint(fields=['source', 'payment'], name='unique_source_payment')]
         indexes = [models.Index(fields=['station','fuel','payment','date'])]
 class StationReport(models.Model):
     owner = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)

@@ -1,0 +1,41 @@
+export type Vehicle = {
+  id: number;
+  type: string;
+  brand: string;
+  model: string;
+  year: number;
+  capacity: number;
+  fuel: string;
+  primary: boolean;
+};
+export type Station = {
+  external_id?: string | null;
+  common_price?: number | null;
+  credit_price?: number | null;
+  common_updated?: string;
+  credit_updated?: string;
+  id: number;
+  name: string;
+  address: string;
+  city: string;
+  state: string;
+  lat: number;
+  lng: number;
+  price: number;
+  air: "Gratuito" | "Pago" | "Não informado";
+  updated: string;
+};
+export type Fill = {
+  id: number;
+  vehicle: number;
+  station: number;
+  date: string;
+  fuel: string;
+  price: number;
+  total: number;
+  liters: number;
+  km: number | null;
+  full: boolean;
+  payment: string;
+  note: string;
+};

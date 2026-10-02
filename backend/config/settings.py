@@ -26,7 +26,7 @@ USE_I18N = True
 USE_TZ = True
 STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
-FRONTEND_DIST = BASE_DIR.parent / 'dist'
+FRONTEND_DIST = BASE_DIR.parent / 'frontend' / 'dist'
 SERVE_FRONTEND = os.environ.get('DJANGO_SERVE_FRONTEND', 'false').lower() == 'true'
 WHITENOISE_ROOT = str(FRONTEND_DIST) if SERVE_FRONTEND else None
 WHITENOISE_MAX_AGE = 0

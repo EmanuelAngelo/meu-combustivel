@@ -1,10 +1,10 @@
 FROM node:22-bookworm-slim AS frontend
 WORKDIR /app
-COPY package.json package-lock.json ./
+COPY frontend/package.json frontend/package-lock.json ./
 RUN npm ci
-COPY index.html tsconfig.json vite.config.ts .env.django ./
-COPY src ./src
-COPY public ./public
+COPY frontend/index.html frontend/tsconfig.json frontend/vite.config.ts frontend/.env.django ./
+COPY frontend/src ./src
+COPY frontend/public ./public
 RUN npm run build:server
 
 FROM python:3.12-slim
@@ -13,7 +13,7 @@ WORKDIR /app
 COPY backend/requirements.txt /app/backend/requirements.txt
 RUN pip install --no-cache-dir -r backend/requirements.txt && useradd --uid 10001 --create-home app
 COPY backend /app/backend
-COPY --from=frontend /app/dist /app/dist
+COPY --from=frontend /app/dist /app/frontend/dist
 RUN DJANGO_DEBUG=true python backend/manage.py collectstatic --noinput && mkdir -p /app/backend/data && chown -R app:app /app
 USER app
 WORKDIR /app/backend

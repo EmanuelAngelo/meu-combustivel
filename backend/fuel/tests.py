@@ -102,8 +102,8 @@ class APITests(TestCase):
         self.assertEqual(anon.post('/api/auth/password-confirm/',payload,format='json').status_code,200)
         self.assertEqual(anon.post('/api/auth/password-confirm/',payload,format='json').status_code,400)
         self.a.refresh_from_db(); self.assertTrue(self.a.check_password(payload['password']))
-    @skipUnless((Path(__file__).resolve().parents[2] / 'dist' / 'index.html').exists(), 'Optional combined deployment requires npm run build')
-    @override_settings(SERVE_FRONTEND=True, WHITENOISE_ROOT=str(Path(__file__).resolve().parents[2] / 'dist'))
+    @skipUnless((Path(__file__).resolve().parents[2] / 'frontend' / 'dist' / 'index.html').exists(), 'Optional combined deployment requires npm run build')
+    @override_settings(SERVE_FRONTEND=True, WHITENOISE_ROOT=str(Path(__file__).resolve().parents[2] / 'frontend' / 'dist'))
     def test_static_app_manifest_and_serviceworker_are_served(self):
         self.client = APIClient()  # Rebuild middleware under the combined-mode override.
         import json
@@ -113,5 +113,5 @@ class APITests(TestCase):
         self.assertIn(b'<div id="app">',b''.join(response.streaming_content))
         for path in ('/manifest.webmanifest','/sw.js','/icon-192.png','/icon-512.png','/icon-maskable-512.png'):
             self.assertEqual(self.client.get(path).status_code,200,path)
-        manifest=json.loads((Path(__file__).resolve().parents[2]/'dist'/'manifest.webmanifest').read_text())
+        manifest=json.loads((Path(__file__).resolve().parents[2]/'frontend'/'dist'/'manifest.webmanifest').read_text())
         self.assertEqual(manifest['display'],'standalone')

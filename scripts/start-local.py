@@ -10,13 +10,13 @@ subprocess.run([str(python), '-m', 'pip', 'install', '-r', 'backend/requirements
 npm = shutil.which('npm.cmd' if os.name == 'nt' else 'npm')
 if not npm:
     sys.exit('Instale Node.js 22 ou superior para continuar.')
-subprocess.run([npm, 'ci'], check=True)
+subprocess.run([npm, 'ci'], cwd=root / 'frontend', check=True)
 env = {**os.environ, 'DJANGO_DEBUG': 'true', 'DJANGO_SERVE_FRONTEND': 'false'}
 subprocess.run([str(python), 'backend/manage.py', 'migrate', '--noinput'], env=env, check=True)
 children = []
 try:
     children.append(subprocess.Popen([str(python), 'backend/manage.py', 'runserver', '127.0.0.1:8000', '--noreload'], env=env))
-    children.append(subprocess.Popen([npm, 'run', 'dev'], env=env))
+    children.append(subprocess.Popen([npm, 'run', 'dev'], cwd=root / 'frontend', env=env))
     print('Frontend: http://localhost:4173 | Backend: http://127.0.0.1:8000 | Ctrl+C para parar.', flush=True)
     while all(child.poll() is None for child in children):
         time.sleep(.5)

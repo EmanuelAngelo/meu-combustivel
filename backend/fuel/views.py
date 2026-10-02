@@ -100,7 +100,16 @@ class StationViewSet(mixins.ListModelMixin,mixins.RetrieveModelMixin,mixins.Crea
         if fuel not in dict(FUEL_CHOICES) or payment not in dict(PAYMENT_CHOICES): raise serializers.ValidationError('Combustível ou condição de pagamento inválidos.')
         earliest=timezone.localdate()-timedelta(days=settings.PRICE_MAX_AGE_DAYS)
         latest=PriceObservation.objects.filter(station=OuterRef('pk'),fuel=fuel,payment=payment,date__gte=earliest,date__lte=timezone.localdate(),currency='BRL',unit='L').order_by('-date','-id')
-        qs=Station.objects.annotate(price=Subquery(latest.values('price')[:1]),updated=Subquery(latest.values('date')[:1])).order_by('name')
+        common_payment = self.request.query_params.get('common_payment', 'Pix')
+        if common_payment not in ('Pix', 'Dinheiro', 'Débito'):
+            raise serializers.ValidationError('Pagamento comum inválido.')
+        prices = PriceObservation.objects.filter(station=OuterRef('pk'), fuel=fuel,
+            date__gte=earliest, date__lte=timezone.localdate(), currency='BRL', unit='L').order_by('-date', '-id')
+        common = prices.filter(payment=common_payment)
+        credit = prices.filter(payment='Crédito')
+        qs=Station.objects.annotate(price=Subquery(latest.values('price')[:1]),updated=Subquery(latest.values('date')[:1]),
+            common_price=Subquery(common.values('price')[:1]), common_updated=Subquery(common.values('date')[:1]),
+            credit_price=Subquery(credit.values('price')[:1]), credit_updated=Subquery(credit.values('date')[:1])).order_by('name')
         for field in ('city','state','country'):
             if self.request.query_params.get(field): qs=qs.filter(**{field+'__iexact':self.request.query_params[field]})
         if self.request.query_params.get('q'): qs=qs.filter(Q(name__icontains=self.request.query_params['q'])|Q(address__icontains=self.request.query_params['q']))
@@ -108,14 +117,39 @@ class StationViewSet(mixins.ListModelMixin,mixins.RetrieveModelMixin,mixins.Crea
     def create(self,request,*args,**kwargs):
         serializer=self.get_serializer(data=request.data); serializer.is_valid(raise_exception=True)
         data=dict(serializer.validated_data); data.setdefault('country','BR'); fingerprint=Station.make_fingerprint(data)
-        with transaction.atomic(): station,created=Station.objects.get_or_create(fingerprint=fingerprint,defaults={**data,'created_by':request.user,'air_confirmed_at':timezone.localdate() if data.get('air','Não informado')!='Não informado' else None})
+        external_id = data.get('external_id')
+        if external_id:
+            existing = Station.objects.filter(external_id=external_id).first()
+            if existing:
+                return Response(self.get_serializer(existing).data, status=200)
+        try:
+            with transaction.atomic():
+                station,created=Station.objects.get_or_create(fingerprint=fingerprint,defaults={**data,'created_by':request.user,'air_confirmed_at':timezone.localdate() if data.get('air','Não informado')!='Não informado' else None})
+                if not created and external_id and not station.external_id:
+                    station.external_id = external_id
+                    station.save(update_fields=['external_id'])
+        except IntegrityError:
+            station = Station.objects.filter(external_id=external_id).first() if external_id else None
+            if station is None:
+                raise
+            created = False
         return Response(self.get_serializer(station).data,status=201 if created else 200)
 class RefuelingViewSet(viewsets.ModelViewSet):
     serializer_class=RefuelingSerializer
     def get_queryset(self): return Refueling.objects.filter(owner=self.request.user).select_related('vehicle','station')
     def sync_price(self,obj):
-        if obj.share: PriceObservation.objects.update_or_create(source=obj,defaults={'station':obj.station,'fuel':obj.fuel,'price':obj.price,'payment':obj.payment,'date':obj.date})
-        else: PriceObservation.objects.filter(source=obj).delete()
+        if not obj.share:
+            PriceObservation.objects.filter(source=obj).delete()
+            return
+        prices = {obj.payment: obj.price}
+        if obj.common_price is not None:
+            prices[obj.common_payment] = obj.common_price
+        if obj.credit_price is not None:
+            prices['Crédito'] = obj.credit_price
+        PriceObservation.objects.filter(source=obj).exclude(payment__in=prices).delete()
+        for payment, price in prices.items():
+            PriceObservation.objects.update_or_create(source=obj, payment=payment,
+                defaults={'station':obj.station, 'fuel':obj.fuel, 'price':price, 'date':obj.date})
     def create(self,request,*args,**kwargs):
         serializer=self.get_serializer(data=request.data); serializer.is_valid(raise_exception=True)
         client_id=serializer.validated_data.get('client_id')

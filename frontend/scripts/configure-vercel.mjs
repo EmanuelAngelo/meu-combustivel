@@ -4,7 +4,8 @@ try {
  const url = new URL(process.argv[2])
  if (url.protocol !== 'https:' || url.username || url.password || url.pathname !== '/' || url.search || url.hash) throw new Error()
  const config = JSON.parse(readFileSync(file, 'utf8'))
- config.rewrites[0].destination = `${url.origin}/api/:path*`
+ config.rewrites[0].source = '/api/:path*/'
+ config.rewrites[0].destination = `${url.origin}/api/:path*/`
  writeFileSync(file, JSON.stringify(config, null, 2) + '\n')
  console.log('vercel.json atualizado. Envie esse arquivo ao repositório antes do deploy.')
 } catch {

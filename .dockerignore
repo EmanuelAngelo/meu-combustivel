@@ -9,3 +9,9 @@ backend/data/*.sqlite3*
 backend/staticfiles
 **/__pycache__
 *.zip
+
+venv
+**/node_modules
+**/dist
+**/.env
+**/.env.local

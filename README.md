@@ -4,6 +4,8 @@ Aplicação para controlar veículos e abastecimentos, conferir os valores da bo
 
 Vue 3, TypeScript e Tailwind CSS no frontend. Django REST Framework e SQLite no backend. Interface em português, responsiva e instalável como PWA.
 
+**Atualizando a versão já publicada? Siga [ATUALIZACAO.md](ATUALIZACAO.md): o Root Directory do Vercel agora é `frontend`.**
+
 ## Executar no computador
 
 Requisitos: Python 3.12 ou 3.13 e Node.js 22 ou superior.
@@ -21,9 +23,10 @@ python backend/manage.py runserver
 
 Se já possui `backend/.env`, ajuste-o sem sobrescrever suas configurações. O Django agora lê esse arquivo automaticamente, tanto no terminal quanto no WSGI. Variáveis já definidas no ambiente têm prioridade.
 
-Em outro terminal, na raiz:
+Em outro terminal, na pasta `frontend/`:
 
 ```powershell
+cd frontend
 npm ci
 npm run dev
 ```
@@ -45,6 +48,7 @@ O código Python e o banco permanecem no PythonAnywhere; o Vercel entrega a inte
 Siga **[DEPLOY.md](DEPLOY.md)** para configurar os dois serviços. Antes de publicar, informe o domínio do backend:
 
 ```bash
+cd frontend
 npm run configure:vercel -- https://SEU-USUARIO.pythonanywhere.com
 ```
 
@@ -66,7 +70,7 @@ O modo demonstrativo só é ativado por `--mode demo`. Um `.env.local` antigo co
 
 ## Configurações
 
-Frontend: `.env.local` opcional, baseado em `.env.example`. Backend: `backend/.env`, baseado em `backend/.env.example` para desenvolvimento ou `backend/.env.production.example` para produção.
+Frontend: `frontend/.env.local` opcional, baseado em `frontend/.env.example`. Backend: `backend/.env`, baseado em `backend/.env.example` para desenvolvimento ou `backend/.env.production.example` para produção.
 
 | Variável | Finalidade |
 | --- | --- |
@@ -98,13 +102,13 @@ Cada conta acessa somente seus veículos, abastecimentos e relatos. Os preços p
 
 A conferência financeira usa Decimal no backend e não comprova qualidade do combustível nem volume realmente entregue. Preços com mais de sete dias saem do ranking atual. Os relatos não comprovam adulteração.
 
-O cadastro de postos é manual, com geolocalização opcional e prevenção de duplicidade por dados normalizados. Google Places ainda não está integrado. Recuperação de senha depende de SMTP. O modo offline não sincroniza novos abastecimentos: formulários não enviados permanecem apenas na memória da página.
+O cadastro de postos permite Google Maps/Places com seleção no mapa e preenchimento dos dados, além do modo manual. A duplicidade é verificada por Place ID e campos normalizados. Recuperação de senha depende de SMTP. O modo offline não sincroniza novos abastecimentos: formulários não enviados permanecem apenas na memória da página.
 
 ## Banco e atualização
 
 SQLite em `backend/data/db.sqlite3`. Preserve esse arquivo e `backend/.env` ao atualizar um projeto existente. Faça backup antes de aplicar alterações. O pacote não inclui banco com dados pessoais.
 
-Nenhuma migração de modelo foi adicionada nesta versão; execute `migrate` para aplicar eventuais migrações anteriores pendentes.
+A migração `0002` adiciona preços opcionais comum/crédito e permite múltiplas observações por abastecimento. Aplique com `migrate`, preservando o banco existente.
 
 ## Testes
 
@@ -112,6 +116,7 @@ Com o ambiente virtual ativo e `backend/.env` configurado para desenvolvimento:
 
 ```bash
 python backend/manage.py test fuel
+cd frontend
 npm test
 npm run build
 ```
@@ -120,14 +125,19 @@ A suíte verifica isolamento dos dados, cálculos, CSRF, sessão, CORS permitido
 
 ## Estrutura
 
-```text
-backend/           API Django, modelos e testes
-src/               Interface Vue
-public/            Ícones e service worker
-scripts/           Inicialização local e configuração do Vercel
-deploy/            Exemplo WSGI para PythonAnywhere
-vercel.json        Build, proxy da API e rotas do frontend
-DEPLOY.md          Publicação e diagnóstico
-```
+| Caminho | Conteúdo |
+| --- | --- |
+| `backend/` | API Django, modelos, migrações e testes |
+| `frontend/` | Aplicação Vue, package.json, Vite e vercel.json |
+| `frontend/src/components/forms/` | Formulários |
+| `frontend/src/components/exibicao/` | Resumos, detalhes e preços |
+| `frontend/src/components/mapas/` | Mapas e seleção Google |
+| `frontend/src/views/` | Telas |
+| `frontend/src/composables/` | Estado e ações |
+| `frontend/src/services/` | HTTP, Google Maps e PWA |
+| `frontend/src/types/` e `utils/` | Contratos e cálculos |
+| `scripts/` e `deploy/` | Inicialização local e WSGI |
+
+Veja [ARQUITETURA.md](ARQUITETURA.md) e [ATUALIZACAO.md](ATUALIZACAO.md).
 
 O Docker mantém o modo conjunto como opção: usa `backend/.env` e ativa `DJANGO_SERVE_FRONTEND=true`. A configuração principal desta versão é frontend e backend separados.
